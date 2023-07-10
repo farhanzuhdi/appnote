@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/mipmap-xhdpi_iconnote.png.flat",
+        "source": "com.example.appnote.app-main-5:/mipmap-xhdpi/iconnote.png"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/mipmap-mdpi_iconnote.png.flat",
+        "source": "com.example.appnote.app-main-5:/mipmap-mdpi/iconnote.png"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/mipmap-xxxhdpi_iconnote.png.flat",
+        "source": "com.example.appnote.app-main-5:/mipmap-xxxhdpi/iconnote.png"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/drawable-v21_launch_background.xml.flat",
+        "source": "com.example.appnote.app-main-5:/drawable-v21/launch_background.xml"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/mipmap-xxhdpi_iconnote.png.flat",
+        "source": "com.example.appnote.app-main-5:/mipmap-xxhdpi/iconnote.png"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/mipmap-hdpi_iconnote.png.flat",
+        "source": "com.example.appnote.app-main-5:/mipmap-hdpi/iconnote.png"
+    },
+    {
+        "merged": "com.example.appnote.app-merged_res-11:/drawable_launch_background.xml.flat",
+        "source": "com.example.appnote.app-main-5:/drawable/launch_background.xml"
+    }
+]
