@@ -11,9 +11,6 @@ class DatabaseHelper {
       )
       """);
   }
-// id: the id of a item
-// title, description: name and description of your activity
-// created_at: the time that the item was created. It will be automatically handled by SQLite
 
   static Future<sql.Database> db() async {
     return sql.openDatabase(
@@ -25,7 +22,6 @@ class DatabaseHelper {
     );
   }
 
-  // Create new item
   static Future<int> createItem(
       {required String title, required String description}) async {
     final db = await DatabaseHelper.db();
@@ -36,20 +32,17 @@ class DatabaseHelper {
     return id;
   }
 
-  // Read all items
   static Future<List<Map<String, dynamic>>> getItems() async {
     final db = await DatabaseHelper.db();
     return db.query('items', orderBy: "id");
   }
 
-  // Get a single item by id
-  //We dont use this method, it is for you if you want it.
-  static Future<List<Map<String, dynamic>>> getItem(int id) async {
+  static Future<List<Map<String, dynamic>>> getItemsWithSearch(
+      {required String title}) async {
     final db = await DatabaseHelper.db();
-    return db.query('items', where: "id = ?", whereArgs: [id], limit: 1);
+    return db.query('items', where: "title LIKE ?", whereArgs: ['%$title%']);
   }
 
-  // Update an item by id
   static Future<int> updateItem(
       {required int id,
       required String title,
@@ -67,8 +60,7 @@ class DatabaseHelper {
     return result;
   }
 
-  // Delete
-  static Future<void> deleteItem(int id) async {
+  static Future<void> deleteItem({required int id}) async {
     final db = await DatabaseHelper.db();
     try {
       await db.delete("items", where: "id = ?", whereArgs: [id]);
