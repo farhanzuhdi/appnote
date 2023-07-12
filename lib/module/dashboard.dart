@@ -1,12 +1,15 @@
 import 'package:appnote/core/helper/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 class DashboardState extends GetxController {
   int count = 0;
   final myData = [].obs;
   var searching = false.obs;
   var formSearch = false.obs;
+  var loading = false.obs;
   TextEditingController inputSearch = TextEditingController();
 
   @override
@@ -16,6 +19,7 @@ class DashboardState extends GetxController {
   }
 
   loadData() async {
+    loading.value = true;
     myData.clear();
     final data = await DatabaseHelper.getItems();
     myData.addAll(data);
@@ -24,6 +28,7 @@ class DashboardState extends GetxController {
     } else {
       searching = false.obs;
     }
+    loading.value = false;
   }
 
   switchSearchMode() {
@@ -38,9 +43,11 @@ class DashboardState extends GetxController {
 
   searchData(value) async {
     if (value.length > 0) {
+      loading.value = true;
       myData.clear();
       final data = await DatabaseHelper.getItemsWithSearch(title: value);
       myData.addAll(data);
+      loading.value = false;
     } else {
       loadData();
     }
@@ -64,6 +71,25 @@ class DashboardState extends GetxController {
       ),
     );
     loadData();
+  }
+
+  Future<String> formatedDate(timestamp) async {
+    String result = "";
+    await initializeDateFormatting();
+    DateTime dateTime = DateTime.parse(timestamp);
+    DateTime dateNow = DateTime.now();
+    String year = DateFormat.y('id_ID').format(dateTime).toString();
+    String yearNow = DateFormat.y('id_ID').format(dateNow).toString();
+    String monthDay = DateFormat.MMMMd('id_ID').format(dateTime).toString();
+    String monthDayNow = DateFormat.MMMMd('id_ID').format(dateNow).toString();
+    if (monthDay == monthDayNow && year == yearNow) {
+      result = DateFormat.Hm('id_ID').format(dateTime).toString();
+    } else if (year == yearNow) {
+      result = DateFormat.MMMMd('id_ID').format(dateTime).toString();
+    } else {
+      result = DateFormat.yMMMMd('id_ID').format(dateTime).toString();
+    }
+    return result;
   }
 }
 
@@ -106,98 +132,124 @@ class Dashboard extends GetView<DashboardState> {
               ],
             ),
           ),
-          body: Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: controller.myData.isEmpty
-                ? const Center(
-                    child: Text(
-                      "Belum ada Catatan",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                : ListView(
-                    children: controller.myData
-                        .map(
-                          (i) => SizedBox(
-                            height: 90,
-                            child: InkWell(
-                              onTap: () => Get.toNamed('/form', arguments: [
-                                "Ubah Catatan",
-                                i['id'],
-                                i['title'],
-                                i['description'],
-                              ])?.then((value) =>
-                                  value ? controller.loadData() : null),
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            i['title'],
-                                            style: const TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold),
-                                            maxLines: 1,
-                                          ),
-                                          const SizedBox(
-                                            height: 4,
-                                          ),
-                                          Text(
-                                            i['description'],
-                                            maxLines: 1,
-                                          ),
-                                        ],
-                                      ),
-                                      InkWell(
-                                        onTap: () => Get.defaultDialog(
-                                          barrierDismissible: false,
-                                          title: "Hapus",
-                                          titlePadding:
-                                              const EdgeInsets.only(top: 16),
-                                          titleStyle: const TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 24,
-                                          ),
-                                          middleText: "Yakin hapus catatan ?",
-                                          middleTextStyle: const TextStyle(
-                                            color: Colors.red,
-                                          ),
-                                          textConfirm: "Iya",
-                                          confirmTextColor: Colors.white,
-                                          onConfirm: () =>
-                                              controller.deleteData(i['id']),
-                                          textCancel: "Batal",
-                                          cancelTextColor: Colors.blue,
-                                          onCancel: () => Get.back(),
-                                        ),
-                                        child: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
+          body: controller.loading.isTrue
+              ? const Center(child: CircularProgressIndicator())
+              : Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: controller.myData.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "Belum ada Catatan",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         )
-                        .toList(),
-                  ),
-          ),
+                      : ListView(
+                          children: controller.myData
+                              .map(
+                                (i) => SizedBox(
+                                  height: 100,
+                                  child: InkWell(
+                                    onTap: () => Get.toNamed('/form',
+                                        arguments: [
+                                          "Ubah Catatan",
+                                          i['id'],
+                                          i['title'],
+                                          i['description'],
+                                        ])?.then((value) =>
+                                        value ? controller.loadData() : null),
+                                    child: Card(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  i['title'],
+                                                  style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                  maxLines: 1,
+                                                ),
+                                                const SizedBox(
+                                                  height: 4,
+                                                ),
+                                                Text(
+                                                  i['description'],
+                                                  maxLines: 1,
+                                                ),
+                                                const SizedBox(
+                                                  height: 2,
+                                                ),
+                                                FutureBuilder(
+                                                    future:
+                                                        controller.formatedDate(
+                                                            i['createdAt']),
+                                                    builder: (BuildContext
+                                                            context,
+                                                        AsyncSnapshot<String>
+                                                            snapshot) {
+                                                      return Text(
+                                                        "${snapshot.data}",
+                                                        style: const TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                      );
+                                                    }),
+                                              ],
+                                            ),
+                                            InkWell(
+                                              onTap: () => Get.defaultDialog(
+                                                barrierDismissible: false,
+                                                title: "Hapus",
+                                                titlePadding:
+                                                    const EdgeInsets.only(
+                                                        top: 16),
+                                                titleStyle: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 24,
+                                                ),
+                                                middleText:
+                                                    "Yakin hapus catatan ?",
+                                                middleTextStyle:
+                                                    const TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                                textConfirm: "Iya",
+                                                confirmTextColor: Colors.white,
+                                                onConfirm: () => controller
+                                                    .deleteData(i['id']),
+                                                textCancel: "Batal",
+                                                cancelTextColor: Colors.blue,
+                                                onCancel: () => Get.back(),
+                                              ),
+                                              child: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                ),
           floatingActionButton: FloatingActionButton(
               heroTag: "add",
               child: const Icon(Icons.edit),
