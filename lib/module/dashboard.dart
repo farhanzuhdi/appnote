@@ -165,7 +165,8 @@ class Dashboard extends GetView<DashboardState> {
                                         value ? controller.loadData() : null),
                                     child: Card(
                                       child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
+                                        padding: const EdgeInsets.fromLTRB(
+                                            8, 4, 8, 4),
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
@@ -183,14 +184,11 @@ class Dashboard extends GetView<DashboardState> {
                                                   maxLines: 1,
                                                 ),
                                                 const SizedBox(
-                                                  height: 4,
+                                                  height: 2,
                                                 ),
                                                 Text(
                                                   i['description'],
                                                   maxLines: 1,
-                                                ),
-                                                const SizedBox(
-                                                  height: 2,
                                                 ),
                                                 FutureBuilder(
                                                     future:
@@ -232,7 +230,6 @@ class Dashboard extends GetView<DashboardState> {
                                                 onConfirm: () => controller
                                                     .deleteData(i['id']),
                                                 textCancel: "Batal",
-                                                cancelTextColor: Colors.blue,
                                                 onCancel: () => Get.back(),
                                               ),
                                               child: const Icon(
