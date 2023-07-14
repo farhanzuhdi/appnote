@@ -1,9 +1,8 @@
 import 'package:appnote/core/helper/database_helper.dart';
+import 'package:appnote/core/helper/function_helper.dart';
 import 'package:appnote/core/models/note.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 
 class DashboardState extends GetxController {
   int count = 0;
@@ -78,25 +77,6 @@ class DashboardState extends GetxController {
       ),
     );
     loadData();
-  }
-
-  Future<String> formatedDate(timestamp) async {
-    String result = "";
-    await initializeDateFormatting();
-    DateTime dateTime = DateTime.parse(timestamp);
-    DateTime dateNow = DateTime.now();
-    String year = DateFormat.y('id_ID').format(dateTime).toString();
-    String yearNow = DateFormat.y('id_ID').format(dateNow).toString();
-    String monthDay = DateFormat.MMMMd('id_ID').format(dateTime).toString();
-    String monthDayNow = DateFormat.MMMMd('id_ID').format(dateNow).toString();
-    if (monthDay == monthDayNow && year == yearNow) {
-      result = DateFormat.Hm('id_ID').format(dateTime).toString();
-    } else if (year == yearNow) {
-      result = DateFormat.MMMMd('id_ID').format(dateTime).toString();
-    } else {
-      result = DateFormat.yMMMMd('id_ID').format(dateTime).toString();
-    }
-    return result;
   }
 }
 
@@ -198,8 +178,8 @@ class Dashboard extends GetView<DashboardState> {
                                                   maxLines: 1,
                                                 ),
                                                 FutureBuilder(
-                                                    future:
-                                                        controller.formatedDate(
+                                                    future: functionHelper
+                                                        .formatedDate(
                                                             i.createdAt),
                                                     builder: (BuildContext
                                                             context,
