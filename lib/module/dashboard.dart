@@ -1,4 +1,5 @@
 import 'package:appnote/core/helper/database_helper.dart';
+import 'package:appnote/core/models/note.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -6,7 +7,7 @@ import 'package:intl/intl.dart';
 
 class DashboardState extends GetxController {
   int count = 0;
-  final myData = [].obs;
+  final myData = <Note>[].obs;
   var searching = false.obs;
   var formSearch = false.obs;
   var loading = false.obs;
@@ -21,8 +22,11 @@ class DashboardState extends GetxController {
   loadData() async {
     loading.value = true;
     myData.clear();
-    final data = await DatabaseHelper.getItems();
-    myData.addAll(data);
+    final result = await DatabaseHelper.getItems();
+    for (var element in result) {
+      var data = Note.fromJson(element);
+      myData.add(data);
+    }
     if (myData.isNotEmpty) {
       searching = true.obs;
     } else {
@@ -45,8 +49,11 @@ class DashboardState extends GetxController {
     if (value.length > 0) {
       loading.value = true;
       myData.clear();
-      final data = await DatabaseHelper.getItemsWithSearch(title: value);
-      myData.addAll(data);
+      final result = await DatabaseHelper.getItemsWithSearch(title: value);
+      for (var element in result) {
+        var data = Note.fromJson(element);
+        myData.add(data);
+      }
       loading.value = false;
     } else {
       loadData();
@@ -158,9 +165,9 @@ class Dashboard extends GetView<DashboardState> {
                                     onTap: () => Get.toNamed('/form',
                                         arguments: [
                                           "Ubah Catatan",
-                                          i['id'],
-                                          i['title'],
-                                          i['description'],
+                                          i.id,
+                                          i.title,
+                                          i.description,
                                         ])?.then((value) =>
                                         value ? controller.loadData() : null),
                                     child: Card(
@@ -176,7 +183,7 @@ class Dashboard extends GetView<DashboardState> {
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  i['title'],
+                                                  i.title,
                                                   style: const TextStyle(
                                                       fontSize: 24,
                                                       fontWeight:
@@ -187,13 +194,13 @@ class Dashboard extends GetView<DashboardState> {
                                                   height: 2,
                                                 ),
                                                 Text(
-                                                  i['description'],
+                                                  i.description,
                                                   maxLines: 1,
                                                 ),
                                                 FutureBuilder(
                                                     future:
                                                         controller.formatedDate(
-                                                            i['createdAt']),
+                                                            i.createdAt),
                                                     builder: (BuildContext
                                                             context,
                                                         AsyncSnapshot<String>
@@ -227,8 +234,8 @@ class Dashboard extends GetView<DashboardState> {
                                                 ),
                                                 textConfirm: "Iya",
                                                 confirmTextColor: Colors.white,
-                                                onConfirm: () => controller
-                                                    .deleteData(i['id']),
+                                                onConfirm: () =>
+                                                    controller.deleteData(i.id),
                                                 textCancel: "Batal",
                                                 onCancel: () => Get.back(),
                                               ),
