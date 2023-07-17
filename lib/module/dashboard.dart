@@ -6,11 +6,13 @@ import 'package:get/get.dart';
 
 class DashboardState extends GetxController {
   int count = 0;
-  final myData = <Note>[].obs;
-  var searching = false.obs;
-  var formSearch = false.obs;
-  var loading = false.obs;
+  List myData = <Note>[].obs;
+  RxBool formSearch = false.obs;
+  RxBool loading = false.obs;
   TextEditingController inputSearch = TextEditingController();
+  RxBool checklist = false.obs;
+  List valueChecklist = <bool>[].obs;
+  RxBool checklistAll = false.obs;
 
   @override
   onInit() {
@@ -21,15 +23,12 @@ class DashboardState extends GetxController {
   loadData() async {
     loading.value = true;
     myData.clear();
+    valueChecklist.clear();
     final result = await DatabaseHelper.getItems();
     for (var element in result) {
       var data = Note.fromJson(element);
       myData.add(data);
-    }
-    if (myData.isNotEmpty) {
-      searching = true.obs;
-    } else {
-      searching = false.obs;
+      valueChecklist.add(false);
     }
     loading.value = false;
   }
@@ -48,10 +47,12 @@ class DashboardState extends GetxController {
     if (value.length > 0) {
       loading.value = true;
       myData.clear();
+      valueChecklist.clear();
       final result = await DatabaseHelper.getItemsWithSearch(title: value);
       for (var element in result) {
         var data = Note.fromJson(element);
         myData.add(data);
+        valueChecklist.add(false);
       }
       loading.value = false;
     } else {
@@ -59,9 +60,13 @@ class DashboardState extends GetxController {
     }
   }
 
-  deleteData(id) async {
+  deleteData() async {
     Get.back();
-    await DatabaseHelper.deleteItem(id: id);
+    for (var i = 0; i < valueChecklist.length; i++) {
+      if (valueChecklist[i]) {
+        await DatabaseHelper.deleteItem(id: myData[i].id);
+      }
+    }
     Get.defaultDialog(
       backgroundColor: Colors.red,
       title: "Berhasil",
@@ -76,7 +81,98 @@ class DashboardState extends GetxController {
         color: Colors.white,
       ),
     );
+    checklist.value = false;
+    inputSearch.clear();
     loadData();
+  }
+
+  switchChecklistMode(index) {
+    if (checklist.isTrue) {
+      for (var i = 0; i < valueChecklist.length; i++) {
+        valueChecklist[i] = false;
+      }
+      if (inputSearch.text.isNotEmpty) {
+        formSearch.value = true;
+      }
+      checklist.value = false;
+    } else {
+      if (formSearch.isTrue) {
+        formSearch.value = false;
+      }
+      valueChecklist[index] = true;
+      checklist.value = true;
+    }
+  }
+
+  checkList(index) {
+    if (valueChecklist[index]) {
+      valueChecklist[index] = false;
+    } else {
+      valueChecklist[index] = true;
+    }
+    checkCheckList();
+  }
+
+  checkCheckList() {
+    int countAll = 0;
+    for (var i = 0; i < valueChecklist.length; i++) {
+      if (valueChecklist[i]) {
+        countAll++;
+      }
+    }
+    if (countAll == valueChecklist.length) {
+      checklistAll.value = true;
+    } else {
+      checklistAll.value = false;
+    }
+  }
+
+  checkListAll() {
+    if (checklistAll.isFalse) {
+      for (var i = 0; i < valueChecklist.length; i++) {
+        valueChecklist[i] = true;
+      }
+      checklistAll.value = true;
+    } else {
+      for (var i = 0; i < valueChecklist.length; i++) {
+        valueChecklist[i] = false;
+      }
+      checklistAll.value = false;
+    }
+  }
+
+  dialogDelete() {
+    int count = 0;
+    for (var i = 0; i < valueChecklist.length; i++) {
+      if (valueChecklist[i] == true) {
+        count++;
+      }
+    }
+    if (count == 0) {
+      return Get.snackbar("Hapus", "Pilih catatan yang akan dihapus",
+          snackPosition: SnackPosition.BOTTOM,
+          colorText: Colors.white,
+          backgroundColor: Colors.red);
+    }
+    Get.defaultDialog(
+      barrierDismissible: false,
+      title: "Hapus",
+      titlePadding: const EdgeInsets.only(top: 16),
+      titleStyle: const TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold,
+        fontSize: 24,
+      ),
+      middleText: "Yakin hapus $count catatan ?",
+      middleTextStyle: const TextStyle(
+        color: Colors.red,
+      ),
+      textConfirm: "Iya",
+      confirmTextColor: Colors.white,
+      onConfirm: () => deleteData(),
+      textCancel: "Batal",
+      onCancel: () => Get.back(),
+    );
   }
 }
 
@@ -90,7 +186,7 @@ class Dashboard extends GetView<DashboardState> {
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Obx(() => controller.formSearch.isTrue
+                controller.formSearch.isTrue
                     ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         width: MediaQuery.of(context).size.width * 0.8,
@@ -107,15 +203,19 @@ class Dashboard extends GetView<DashboardState> {
                               hintText: "Cari Judul", border: InputBorder.none),
                         ),
                       )
-                    : const Text("Catatan")),
-                controller.searching.isTrue
-                    ? InkWell(
-                        onTap: () => controller.switchSearchMode(),
-                        child: Icon(controller.formSearch.isTrue
-                            ? Icons.close
-                            : Icons.search),
+                    : const Text("Catatan"),
+                controller.myData.isEmpty
+                    ? Container()
+                    : InkWell(
+                        onTap: () => controller.checklist.isTrue
+                            ? controller.checkListAll()
+                            : controller.switchSearchMode(),
+                        child: Icon(controller.checklist.isTrue
+                            ? Icons.checklist_rtl_rounded
+                            : controller.formSearch.isTrue
+                                ? Icons.close
+                                : Icons.search),
                       )
-                    : Container()
               ],
             ),
           ),
@@ -137,109 +237,101 @@ class Dashboard extends GetView<DashboardState> {
                           ),
                         )
                       : ListView(
-                          children: controller.myData
-                              .map(
-                                (i) => SizedBox(
-                                  height: 100,
-                                  child: InkWell(
-                                    onTap: () => Get.toNamed('/form',
-                                        arguments: [
+                          children: [
+                            for (var i = 0; i < controller.myData.length; i++)
+                              SizedBox(
+                                height: 100,
+                                child: InkWell(
+                                  onTap: () => controller.checklist.isTrue
+                                      ? controller.checkList(i)
+                                      : Get.toNamed('/form', arguments: [
                                           "Ubah Catatan",
-                                          i.id,
-                                          i.title,
-                                          i.description,
+                                          controller.myData[i].id,
+                                          controller.myData[i].title,
+                                          controller.myData[i].description,
                                         ])?.then((value) =>
-                                        value ? controller.loadData() : null),
-                                    child: Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            8, 4, 8, 4),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  i.title,
-                                                  style: const TextStyle(
-                                                      fontSize: 24,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                  maxLines: 1,
-                                                ),
-                                                const SizedBox(
-                                                  height: 2,
-                                                ),
-                                                Text(
-                                                  i.description,
-                                                  maxLines: 1,
-                                                ),
-                                                FutureBuilder(
-                                                    future: functionHelper
-                                                        .formatedDate(
-                                                            i.createdAt),
-                                                    builder: (BuildContext
-                                                            context,
-                                                        AsyncSnapshot<String>
-                                                            snapshot) {
-                                                      return Text(
-                                                        "${snapshot.data}",
-                                                        style: const TextStyle(
-                                                            fontSize: 12,
-                                                            color: Colors.grey),
-                                                      );
-                                                    }),
-                                              ],
-                                            ),
-                                            InkWell(
-                                              onTap: () => Get.defaultDialog(
-                                                barrierDismissible: false,
-                                                title: "Hapus",
-                                                titlePadding:
-                                                    const EdgeInsets.only(
-                                                        top: 16),
-                                                titleStyle: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 24,
-                                                ),
-                                                middleText:
-                                                    "Yakin hapus catatan ?",
-                                                middleTextStyle:
-                                                    const TextStyle(
-                                                  color: Colors.red,
-                                                ),
-                                                textConfirm: "Iya",
-                                                confirmTextColor: Colors.white,
-                                                onConfirm: () =>
-                                                    controller.deleteData(i.id),
-                                                textCancel: "Batal",
-                                                onCancel: () => Get.back(),
+                                          value ? controller.loadData() : null),
+                                  onLongPress: () =>
+                                      controller.switchChecklistMode(i),
+                                  child: Card(
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                controller.myData[i].title,
+                                                style: const TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                                maxLines: 1,
                                               ),
-                                              child: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
+                                              const SizedBox(
+                                                height: 2,
                                               ),
-                                            )
-                                          ],
-                                        ),
+                                              Text(
+                                                controller
+                                                    .myData[i].description,
+                                                maxLines: 1,
+                                              ),
+                                              FutureBuilder(
+                                                  future: functionHelper
+                                                      .formatedDate(controller
+                                                          .myData[i].createdAt),
+                                                  builder:
+                                                      (BuildContext context,
+                                                          AsyncSnapshot<String>
+                                                              snapshot) {
+                                                    return Text(
+                                                      "${snapshot.data}",
+                                                      style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey),
+                                                    );
+                                                  }),
+                                            ],
+                                          ),
+                                          controller.checklist.isTrue
+                                              ? Checkbox(
+                                                  value: controller
+                                                      .valueChecklist[i],
+                                                  onChanged: (value) =>
+                                                      controller.checkList(i),
+                                                )
+                                              : Container()
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ),
-                              )
-                              .toList(),
+                              ),
+                          ],
                         ),
                 ),
           floatingActionButton: FloatingActionButton(
               heroTag: "add",
-              child: const Icon(Icons.edit),
+              shape: const CircleBorder(),
+              backgroundColor: controller.checklist.isTrue
+                  ? const Color.fromARGB(255, 253, 90, 78)
+                  : const Color.fromARGB(255, 114, 173, 46),
+              child: Icon(
+                controller.checklist.isTrue ? Icons.delete_rounded : Icons.edit,
+                color: Colors.white,
+              ),
               onPressed: () {
-                Get.toNamed('/form', arguments: ["Tulis Catatan"])
-                    ?.then((value) => value ? controller.loadData() : null);
+                if (controller.checklist.isTrue) {
+                  controller.dialogDelete();
+                } else {
+                  Get.toNamed('/form', arguments: ["Tulis Catatan"])
+                      ?.then((value) => value ? controller.loadData() : null);
+                }
               }),
         ));
   }

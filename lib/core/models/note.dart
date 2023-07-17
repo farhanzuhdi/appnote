@@ -5,14 +5,13 @@ class Note {
   var title;
   var description;
   String createdAt;
-  bool? check;
 
-  Note(
-      {required this.id,
-      required this.title,
-      required this.description,
-      required this.createdAt,
-      this.check});
+  Note({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.createdAt,
+  });
 
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
@@ -20,7 +19,6 @@ class Note {
       title: json['title'] ?? '''''',
       description: json['description'] ?? '''''',
       createdAt: json['createdAt'] ?? "",
-      check: json['check'] ?? false,
     );
   }
 }

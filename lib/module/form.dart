@@ -26,7 +26,7 @@ class FormPageState extends GetxController {
       );
       Get.back(result: true);
       Get.defaultDialog(
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 114, 173, 46),
         title: "Berhasil",
         titlePadding: const EdgeInsets.only(top: 16),
         titleStyle: const TextStyle(
@@ -47,7 +47,7 @@ class FormPageState extends GetxController {
       );
       Get.back(result: true);
       Get.defaultDialog(
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 224, 174, 6),
         title: "Berhasil",
         titlePadding: const EdgeInsets.only(top: 16),
         titleStyle: const TextStyle(
