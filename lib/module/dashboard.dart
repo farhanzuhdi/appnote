@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:appnote/core/helper/database_helper.dart';
 import 'package:appnote/core/helper/function_helper.dart';
 import 'package:appnote/core/models/note.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class DashboardState extends GetxController {
@@ -174,6 +177,14 @@ class DashboardState extends GetxController {
       onCancel: () => Get.back(),
     );
   }
+
+  back() {
+    if (checklist.isTrue) {
+      switchChecklistMode(0);
+    } else {
+      SystemNavigator.pop();
+    }
+  }
 }
 
 class Dashboard extends GetView<DashboardState> {
@@ -219,102 +230,107 @@ class Dashboard extends GetView<DashboardState> {
               ],
             ),
           ),
-          body: controller.loading.isTrue
-              ? const Center(child: CircularProgressIndicator())
-              : Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
-                  child: controller.myData.isEmpty
-                      ? const Center(
-                          child: Text(
-                            "Belum ada Catatan",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+          body: WillPopScope(
+            onWillPop: () => controller.back(),
+            child: controller.loading.isTrue
+                ? const Center(child: CircularProgressIndicator())
+                : Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    child: controller.myData.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "Belum ada Catatan",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        )
-                      : ListView(
-                          children: [
-                            for (var i = 0; i < controller.myData.length; i++)
-                              SizedBox(
-                                height: 100,
-                                child: InkWell(
-                                  onTap: () => controller.checklist.isTrue
-                                      ? controller.checkList(i)
-                                      : Get.toNamed('/form', arguments: [
-                                          "Ubah Catatan",
-                                          controller.myData[i].id,
-                                          controller.myData[i].title,
-                                          controller.myData[i].description,
-                                        ])?.then((value) =>
-                                          value ? controller.loadData() : null),
-                                  onLongPress: () =>
-                                      controller.switchChecklistMode(i),
-                                  child: Card(
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                controller.myData[i].title,
-                                                style: const TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                maxLines: 1,
-                                              ),
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
-                                              Text(
-                                                controller
-                                                    .myData[i].description,
-                                                maxLines: 1,
-                                              ),
-                                              FutureBuilder(
-                                                  future: functionHelper
-                                                      .formatedDate(controller
-                                                          .myData[i].createdAt),
-                                                  builder:
-                                                      (BuildContext context,
-                                                          AsyncSnapshot<String>
-                                                              snapshot) {
-                                                    return Text(
-                                                      "${snapshot.data}",
-                                                      style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.grey),
-                                                    );
-                                                  }),
-                                            ],
-                                          ),
-                                          controller.checklist.isTrue
-                                              ? Checkbox(
-                                                  value: controller
-                                                      .valueChecklist[i],
-                                                  onChanged: (value) =>
-                                                      controller.checkList(i),
-                                                )
-                                              : Container()
-                                        ],
+                          )
+                        : ListView(
+                            children: [
+                              for (var i = 0; i < controller.myData.length; i++)
+                                SizedBox(
+                                  height: 100,
+                                  child: InkWell(
+                                    onTap: () => controller.checklist.isTrue
+                                        ? controller.checkList(i)
+                                        : Get.toNamed('/form', arguments: [
+                                            "Ubah Catatan",
+                                            controller.myData[i].id,
+                                            controller.myData[i].title,
+                                            controller.myData[i].description,
+                                          ])?.then((value) => value
+                                            ? controller.loadData()
+                                            : null),
+                                    onLongPress: () =>
+                                        controller.switchChecklistMode(i),
+                                    child: Card(
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            8, 4, 8, 4),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  controller.myData[i].title,
+                                                  style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                  maxLines: 1,
+                                                ),
+                                                const SizedBox(
+                                                  height: 2,
+                                                ),
+                                                Text(
+                                                  controller
+                                                      .myData[i].description,
+                                                  maxLines: 1,
+                                                ),
+                                                FutureBuilder(
+                                                    future: functionHelper
+                                                        .formatedDate(controller
+                                                            .myData[i]
+                                                            .createdAt),
+                                                    builder: (BuildContext
+                                                            context,
+                                                        AsyncSnapshot<String>
+                                                            snapshot) {
+                                                      return Text(
+                                                        "${snapshot.data}",
+                                                        style: const TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                      );
+                                                    }),
+                                              ],
+                                            ),
+                                            controller.checklist.isTrue
+                                                ? Checkbox(
+                                                    value: controller
+                                                        .valueChecklist[i],
+                                                    onChanged: (value) =>
+                                                        controller.checkList(i),
+                                                  )
+                                                : Container()
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                ),
+                            ],
+                          ),
+                  ),
+          ),
           floatingActionButton: FloatingActionButton(
               heroTag: "add",
               shape: const CircleBorder(),
