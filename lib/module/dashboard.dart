@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:appnote/core/helper/database_helper.dart';
 import 'package:appnote/core/helper/function_helper.dart';
 import 'package:appnote/core/models/note.dart';

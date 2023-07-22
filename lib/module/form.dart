@@ -1,6 +1,5 @@
 import 'package:appnote/core/helper/database_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class FormPageState extends GetxController {
@@ -100,19 +99,20 @@ class FormPageState extends GetxController {
   }
 
   back() {
-    if (data.length > 1 && data[2] != title.text ||
-        data[3] != description.text) {
-      Get.defaultDialog(
-        title: "Batal ubah",
-        middleText: "Yakin buang perubahan ?",
-        textCancel: "Batal",
-        onConfirm: () {
-          Get.back();
-          FocusManager.instance.primaryFocus?.unfocus();
-          Get.back(result: false);
-        },
-        textConfirm: "Iya",
-      );
+    if (data.length > 1) {
+      if (data[2] != title.text || data[3] != description.text) {
+        Get.defaultDialog(
+          title: "Batal ubah",
+          middleText: "Yakin buang perubahan ?",
+          textCancel: "Batal",
+          onConfirm: () {
+            Get.back();
+            FocusManager.instance.primaryFocus?.unfocus();
+            Get.back(result: false);
+          },
+          textConfirm: "Iya",
+        );
+      }
     } else {
       Get.back(result: false);
     }
